@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { ProfileUpdateData } from "../types/auth";
 
 const BASE_URL = "http://87.106.108.25:3456/api/v1";
 
@@ -21,8 +22,6 @@ class ApiService {
 
   async login(email: string, password: string): Promise<ApiResponse> {
     try {
-      console.log("🔐 Login attempt:", { email, baseUrl: BASE_URL });
-
       const response = await fetch(`${BASE_URL}/auth/login`, {
         method: "POST",
         headers: {
@@ -32,10 +31,8 @@ class ApiService {
       });
 
       const data = await response.json();
-      console.log("🔐 Login response:", { status: response.status, data });
 
       if (response.ok && data.data && data.data.token) {
-        console.log("✅ Login successful, token received");
         return {
           success: true,
           token: data.data.token,
@@ -43,7 +40,6 @@ class ApiService {
         };
       }
 
-      console.log("❌ Login failed:", data);
       return {
         success: false,
         message: data.message || "Erreur de connexion",
@@ -63,12 +59,6 @@ class ApiService {
     alias: string
   ): Promise<ApiResponse> {
     try {
-      console.log("📝 Register attempt:", {
-        email,
-        alias,
-        baseUrl: BASE_URL,
-      });
-
       const response = await fetch(`${BASE_URL}/auth/register`, {
         method: "POST",
         headers: {
@@ -78,14 +68,8 @@ class ApiService {
       });
 
       const data = await response.json();
-      console.log("📝 Register response:", {
-        status: response.status,
-        success: data.success,
-        message: data.message,
-      });
 
       if (response.ok && data.success) {
-        console.log("✅ Registration successful");
         return {
           success: true,
           data: data.data,
@@ -114,7 +98,6 @@ class ApiService {
         errorMessage = data.message || errorMessage;
       }
 
-      console.log("❌ Registration failed:", errorMessage);
       return {
         success: false,
         message: errorMessage,
@@ -131,18 +114,14 @@ class ApiService {
   async verifyToken(): Promise<boolean> {
     try {
       const headers = await this.getAuthHeaders();
-      console.log("🔍 Verifying token with headers:", headers);
 
       const response = await fetch(`${BASE_URL}/auth/verify`, {
         method: "GET",
         headers,
       });
 
-      console.log("🔍 Token verification status:", response.status);
-
       if (!response.ok) {
-        const errorData = await response.json();
-        console.log("❌ Token verification failed:", errorData);
+        await response.json();
       }
 
       return response.ok;
@@ -155,18 +134,14 @@ class ApiService {
   async getProfile(): Promise<any> {
     try {
       const headers = await this.getAuthHeaders();
-      console.log("👤 Getting profile with headers:", headers);
 
       const response = await fetch(`${BASE_URL}/profile/me`, {
         method: "GET",
         headers,
       });
 
-      console.log("👤 Profile response status:", response.status);
-
       if (response.ok) {
         const data = await response.json();
-        console.log("👤 Profile data received:", data);
 
         // Combine user and profile data according to API structure
         if (data.success && data.data) {
@@ -182,20 +157,116 @@ class ApiService {
             pronous: data.data.profile.pronous,
             is_public: data.data.profile.is_public,
           };
-          console.log("👤 Combined user data:", combinedUser);
           return combinedUser;
         }
 
         return data.data || data; // Fallback
       } else {
-        const errorData = await response.json();
-        console.log("❌ Profile error:", errorData);
+        await response.json();
       }
 
       return null;
     } catch (error) {
       console.error("❌ Get profile error:", error);
       return null;
+    }
+  }
+
+  async updateProfile(profileData: ProfileUpdateData): Promise<ApiResponse> {
+    try {
+      console.log("🔄 Updating profile with data:", profileData);
+
+      const headers = await this.getAuthHeaders();
+
+      const response = await fetch(`${BASE_URL}/profile/me`, {
+        method: "PUT",
+        headers,
+        body: JSON.stringify(profileData),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        console.log("✅ Profile updated successfully");
+        return {
+          success: true,
+          data: data.data,
+          message: data.message || "Profil mis à jour avec succès",
+        };
+      }
+
+      // Gestion des erreurs spécifiques
+      let errorMessage = "Erreur lors de la mise à jour du profil";
+
+      if (response.status === 400) {
+        if (data.message?.includes("alias")) {
+          errorMessage = "Cet alias est déjà utilisé";
+        } else if (data.message?.includes("birthdate")) {
+          errorMessage = "Format de date de naissance invalide";
+        } else {
+          errorMessage = data.message || "Données invalides";
+        }
+      } else if (response.status === 401) {
+        errorMessage = "Vous devez être connecté pour modifier votre profil";
+      } else if (response.status === 422) {
+        errorMessage = "Format des données incorrect";
+      } else if (response.status >= 500) {
+        errorMessage = "Erreur serveur, veuillez réessayer plus tard";
+      } else {
+        errorMessage = data.message || errorMessage;
+      }
+
+      console.log("❌ Profile update failed:", errorMessage);
+      return {
+        success: false,
+        message: errorMessage,
+      };
+    } catch (error) {
+      console.error("❌ Update profile error:", error);
+      return {
+        success: false,
+        message: "Erreur de réseau, vérifiez votre connexion",
+      };
+    }
+  }
+
+  async getUserImages(
+    page: number = 1,
+    limit: number = 20,
+    pinnedOnly: boolean = false
+  ): Promise<ApiResponse> {
+    try {
+      console.log("📸 Fetching user images...");
+
+      const headers = await this.getAuthHeaders();
+      const url = `${BASE_URL}/images/me?page=${page}&limit=${limit}&pinned_only=${pinnedOnly}`;
+
+      const response = await fetch(url, {
+        method: "GET",
+        headers,
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        console.log("✅ Images fetched successfully");
+        return {
+          success: true,
+          data: data.data,
+        };
+      }
+
+      console.log("❌ Failed to fetch images:", data.message);
+      return {
+        success: false,
+        message: data.message || "Erreur lors de la récupération des images",
+      };
+    } catch (error) {
+      console.error("❌ Get images error:", error);
+      return {
+        success: false,
+        message: "Erreur de réseau",
+      };
     }
   }
 }

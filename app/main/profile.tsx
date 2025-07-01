@@ -1,6 +1,6 @@
 import { Feather, Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import {
   Alert,
   Dimensions,
@@ -12,9 +12,8 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
-import { ScreenWrapper } from "./components";
-import { useAuth } from "./context/AuthContext";
-import { apiService } from "./services/apiService";
+import { ScreenWrapper } from "../components";
+import { useAuth, useUserImages } from "../hooks";
 
 interface UserImage {
   id: string;
@@ -23,39 +22,13 @@ interface UserImage {
   created_at: string;
 }
 
-export default function HomeScreen() {
+export default function ProfileScreen() {
   const { user, logout } = useAuth();
-  const [images, setImages] = useState<UserImage[]>([]);
-  const [, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-
+  const { images, loading, refreshing, refreshImages, getRecentPhotosCount } =
+    useUserImages();
   const screenWidth = Dimensions.get("window").width;
 
-  useEffect(() => {
-    if (user) {
-      loadUserImages();
-    }
-  }, [user]);
-
-  const loadUserImages = async () => {
-    setLoading(true);
-    try {
-      const response = await apiService.getUserImages(1, 50);
-      if (response.success && response.data) {
-        setImages(response.data.images || []);
-      }
-    } catch (error) {
-      console.error("❌ Error loading images:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadUserImages();
-    setRefreshing(false);
-  };
+  const onRefresh = refreshImages;
 
   const handleLogout = () => {
     Alert.alert("Déconnexion", "Êtes-vous sûr de vouloir vous déconnecter ?", [
@@ -65,22 +38,18 @@ export default function HomeScreen() {
         style: "destructive",
         onPress: async () => {
           await logout();
-          router.replace("./auth");
+          router.replace("../auth");
         },
       },
     ]);
   };
 
   const handleEditProfile = () => {
-    router.push("./profile-edit");
-  };
-
-  const handleAddPhoto = () => {
-    Alert.alert("Ajouter une photo", "Fonctionnalité à venir");
+    router.push("../profile-edit");
   };
 
   const handleAddBio = () => {
-    router.push("./profile-edit");
+    router.push("../profile-edit");
   };
 
   const handleAddLocation = () => {
@@ -100,16 +69,6 @@ export default function HomeScreen() {
 
   const getInitials = (alias: string) => {
     return alias.substring(0, 2).toUpperCase();
-  };
-
-  const getRecentPhotosCount = () => {
-    // Simuler le compteur de photos récentes (dernières 24h)
-    const recent = images.filter((img) => {
-      const photoDate = new Date(img.created_at);
-      const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-      return photoDate > dayAgo;
-    });
-    return recent.length;
   };
 
   const renderAvatar = () => {
@@ -230,10 +189,8 @@ export default function HomeScreen() {
 
   const renderSkeletonPhotos = () => {
     // Configuration BeReal - Rectangle d'or en mode portrait
-    // ScreenWrapper ajoute px-md (16px de chaque côté) = 32px total
     // Notre grille ajoute px-4 (16px de chaque côté) = 32px total
-    // Total padding = 64px à soustraire de la largeur écran
-    const totalPadding = 64;
+    const totalPadding = 32;
     const availableWidth = screenWidth - totalPadding;
     const gap = 4; // Gap entre photos comme BeReal
     const photoWidth = (availableWidth - gap * 2) / 3; // 3 photos par ligne
@@ -266,24 +223,6 @@ export default function HomeScreen() {
     if (images.length === 0) {
       return (
         <View>
-          {/* Message d'état vide - plus compact */}
-          <View className="items-center py-6 mb-6">
-            <View className="w-12 h-12 rounded-full bg-background-tertiary items-center justify-center mb-3">
-              <Feather name="camera" size={20} color="#6B7280" />
-            </View>
-            <Text className="text-text-secondary text-center text-sm mb-3">
-              Aucune photo pour le moment
-            </Text>
-            <TouchableOpacity
-              onPress={handleAddPhoto}
-              className="bg-primary rounded-full px-4 py-2"
-            >
-              <Text className="text-black font-medium text-sm">
-                Ajouter ma première photo
-              </Text>
-            </TouchableOpacity>
-          </View>
-
           {/* Squelettes BeReal-like */}
           {renderSkeletonPhotos()}
         </View>
@@ -291,7 +230,7 @@ export default function HomeScreen() {
     }
 
     // Disposition BeReal avec rectangle d'or pour les vraies photos
-    const totalPadding = 64; // Même calcul que les squelettes
+    const totalPadding = 32; // Même calcul que les squelettes
     const availableWidth = screenWidth - totalPadding;
     const gap = 4;
     const photoWidth = (availableWidth - gap * 2) / 3; // 3 photos par ligne, taille uniforme
@@ -300,7 +239,7 @@ export default function HomeScreen() {
     const rows: React.ReactElement[] = [];
     let currentRow: React.ReactElement[] = [];
 
-    images.forEach((image, index) => {
+    images.forEach((image) => {
       // 3 photos par ligne maximum
       if (currentRow.length >= 3) {
         rows.push(
@@ -403,17 +342,10 @@ export default function HomeScreen() {
         {renderShareButton()}
 
         {/* Message informatif */}
-        <View className="flex-row items-center justify-center mb-6 px-8">
-          <Text className="text-text-muted text-center text-xs">
-            Vos PickMes sont privés et éphémères sauf s&apos;ils sont marqués avec
-          </Text>
-          <Ionicons
-            name="star"
-            size={12}
-            color="#9CA3AF"
-            style={{ marginLeft: 4 }}
-          />
-        </View>
+        <Text className="text-text-muted text-center text-xs mb-6 px-8">
+          Vos PickMes sont privés et éphémères sauf s&apos;ils sont marqués avec
+          ⭐
+        </Text>
 
         {/* Grid de photos */}
         {renderPhotosGrid()}

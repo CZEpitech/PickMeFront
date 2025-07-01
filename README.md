@@ -1,50 +1,91 @@
-# Welcome to your Expo app 👋
+# 📱 PickMe Frontend - Design System Minimaliste
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Une application mobile React Native de réseau social de rencontres avec un design system **strictement minimaliste** et **parfaitement fonctionnel**.
 
-## Get started
+## 🎯 Philosophie
 
-1. Install dependencies
+**Minimalisme avant tout :** Ce design system privilégie la **fonctionnalité** et la **simplicité** au design. Chaque composant est réduit à son essence pour assurer un fonctionnement parfait.
 
-   ```bash
-   npm install
-   ```
+## 🧩 Composants Disponibles
 
-2. Start the app
+### SafeArea Wrappers
 
-   ```bash
-   npx expo start
-   ```
+```tsx
+import {
+  ScreenWrapper,
+  SafeTopWrapper,
+  SafeBottomWrapper,
+} from "./app/components";
 
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+// Wrapper d'écran complet
+<ScreenWrapper>
+  <Content />
+</ScreenWrapper>;
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+### Boutons
 
-## Learn more
+```tsx
+import { Button } from "./app/components";
 
-To learn more about developing your project with Expo, look at the following resources:
+<Button title="Primaire" variant="primary" />
+<Button title="Secondaire" variant="secondary" />
+<Button title="Contour" variant="outline" />
+<Button title="Désactivé" disabled />
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Inputs
 
-## Join the community
+```tsx
+import { Input } from "./app/components";
 
-Join our community of developers creating universal apps.
+<Input
+  label="Email"
+  placeholder="votre@email.com"
+  leftIcon={<Text>📧</Text>}
+  error="Message d'erreur"
+/>;
+```
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Cartes & Listes
+
+```tsx
+import { Card, TouchableCard, ListItem, Section } from "./app/components";
+
+<Section title="Ma section">
+  <Card>
+    <Text>Contenu de base</Text>
+  </Card>
+
+  <Card className="p-0">
+    <ListItem title="Titre" subtitle="Sous-titre" showChevron />
+  </Card>
+</Section>;
+```
+
+## 🎨 Constantes de Design
+
+```tsx
+import { SPACING, SIZES, COLORS } from "./app/constants/design";
+
+// Espacements : xs=4px, sm=8px, md=16px, lg=24px
+// Tailles : button=44px, input=44px
+// Couleurs : primary, secondary, danger, success
+```
+
+## 🚀 Utilisation
+
+1. **TOUJOURS** utiliser `ScreenWrapper` pour les écrans
+2. **JAMAIS** utiliser SafeAreaView directement
+3. Préférer les classes Tailwind : `px-md`, `mb-sm`, `bg-primary`
+4. Garder le design **simple** et **fonctionnel**
+
+## 🔧 Configuration
+
+- **Tailwind** : Configuration minimaliste dans `tailwind.config.js`
+- **Types** : Tous les composants sont typés TypeScript
+- **Responsive** : Adaptatif iOS/Android automatiquement
+
+---
+
+**📍 Priorité** : Fonctionnalité > Esthétique. Le design viendra plus tard ! 🎯

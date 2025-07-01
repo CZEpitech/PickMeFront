@@ -35,6 +35,28 @@ export interface User {
   is_public?: boolean;
 }
 
+// Nouveaux types pour la modification du profil
+export interface ProfileUpdateData {
+  alias?: string;
+  birthdate?: string;
+  pays?: string;
+  langue?: string;
+  description?: string;
+  avatar?: string;
+  pronous?: string;
+  is_public?: boolean;
+}
+
+export interface ProfileValidationErrors {
+  alias?: string;
+  birthdate?: string;
+  pays?: string;
+  langue?: string;
+  description?: string;
+  avatar?: string;
+  pronous?: string;
+}
+
 // Utilitaires de validation
 export const validateEmail = (email: string): string => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

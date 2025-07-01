@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { apiService } from "../services/apiService";
+import { ProfileUpdateData } from "../types/auth";
 
 interface User {
   id: string;
@@ -25,6 +26,10 @@ interface AuthContextType {
     alias: string
   ) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
+  updateProfile: (
+    profileData: ProfileUpdateData
+  ) => Promise<{ success: boolean; message?: string }>;
+  refreshProfile: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -42,25 +47,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const checkAuthStatus = async () => {
     try {
-      console.log("🔄 Checking auth status...");
       const token = await AsyncStorage.getItem("authToken");
-      console.log("🔑 Token from storage:", token ? "Present" : "Not found");
 
       if (token) {
         const isValid = await apiService.verifyToken();
-        console.log("✅ Token validation result:", isValid);
 
         if (isValid) {
           const profile = await apiService.getProfile();
-          console.log("👤 Profile retrieved:", profile);
 
           if (profile) {
             setUser(profile);
           } else {
-            console.log("❌ No profile data received");
           }
         } else {
-          console.log("❌ Token invalid, removing from storage");
           await AsyncStorage.removeItem("authToken");
         }
       }
@@ -74,27 +73,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      console.log("🔐 Starting login process...");
       const response = await apiService.login(email, password);
-      console.log("🔐 Login response in context:", response);
 
       if (response.success && response.token) {
-        console.log("💾 Saving token to storage...");
         await AsyncStorage.setItem("authToken", response.token);
 
-        console.log("👤 Fetching profile after login...");
         const profile = await apiService.getProfile();
-        console.log("👤 Profile after login:", profile);
 
         if (profile) {
           setUser(profile);
-          console.log("✅ Login successful, user set");
           return true;
         } else {
-          console.log("❌ Login failed: no profile data");
         }
       } else {
-        console.log("❌ Login failed: no token or not successful");
       }
       return false;
     } catch (error) {
@@ -109,12 +100,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     alias: string
   ): Promise<{ success: boolean; message?: string }> => {
     try {
-      console.log("📝 Starting registration process...");
-
       // Validation côté client
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(email)) {
-        console.log("❌ Invalid email format");
         return {
           success: false,
           message: "Format d'email invalide",
@@ -122,7 +110,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (password.length < 6) {
-        console.log("❌ Password too short");
         return {
           success: false,
           message: "Le mot de passe doit contenir au moins 6 caractères",
@@ -130,7 +117,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (alias.length < 3) {
-        console.log("❌ Alias too short");
         return {
           success: false,
           message: "L'alias doit contenir au moins 3 caractères",
@@ -138,7 +124,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       }
 
       if (!/^[a-zA-Z0-9_]+$/.test(alias)) {
-        console.log("❌ Invalid alias format");
         return {
           success: false,
           message:
@@ -146,13 +131,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         };
       }
 
-      console.log("✅ Client validation passed");
       const response = await apiService.register(email, password, alias);
 
       if (response.success) {
-        console.log("✅ Registration successful in context");
       } else {
-        console.log("❌ Registration failed in context:", response.message);
       }
 
       return {
@@ -165,6 +147,44 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         success: false,
         message: "Une erreur inattendue est survenue",
       };
+    }
+  };
+
+  const updateProfile = async (
+    profileData: ProfileUpdateData
+  ): Promise<{ success: boolean; message?: string }> => {
+    try {
+      console.log("🔄 Updating profile in context:", profileData);
+
+      const response = await apiService.updateProfile(profileData);
+
+      if (response.success) {
+        // Rafraîchir le profil après la mise à jour
+        await refreshProfile();
+        return { success: true, message: response.message };
+      } else {
+        return { success: false, message: response.message };
+      }
+    } catch (error) {
+      console.error("❌ Update profile context error:", error);
+      return {
+        success: false,
+        message: "Erreur lors de la mise à jour du profil",
+      };
+    }
+  };
+
+  const refreshProfile = async () => {
+    try {
+      const profile = await apiService.getProfile();
+      if (profile) {
+        console.log("✅ Profile refreshed successfully");
+        setUser(profile);
+      } else {
+        console.log("❌ Failed to refresh profile");
+      }
+    } catch (error) {
+      console.error("❌ Refresh profile error:", error);
     }
   };
 
@@ -183,6 +203,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     login,
     register,
     logout,
+    updateProfile,
+    refreshProfile,
     isAuthenticated: !!user,
   };
 

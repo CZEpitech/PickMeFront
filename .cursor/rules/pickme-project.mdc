@@ -1,0 +1,45 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# PickMe Frontend - Règles du Projet
+
+## 📱 Contexte du Projet
+PickMe est une application mobile React Native de réseau social de rencontres.
+
+## 🏗️ Architecture
+- **Frontend**: React Native (ce repository)
+- **Backend**: Repository séparé, API documentée dans [postman.json](mdc:postman.json)
+- **Service API**: Centralisé dans [app/services/apiService.tsx](mdc:app/services/apiService.tsx)
+
+## 🔗 Configuration Backend
+- **URL de base**: `http://87.106.108.25:3456/api/v1`
+- **Documentation complète**: Voir [postman.json](mdc:postman.json) pour tous les endpoints disponibles
+- **Authentification**: JWT Bearer token stocké dans AsyncStorage
+
+## 📋 Endpoints Disponibles (selon postman.json)
+- 🔐 **Authentication**: register, login, verify token
+- 👤 **Profile**: get/update profile utilisateur
+- 👥 **Friends**: gestion des amis et demandes d'amitié
+- 🖼️ **Images**: gestion des images utilisateur (ajout, suppression, épinglage)
+- 📊 **Users & Stats**: recherche d'utilisateurs et statistiques
+- 🔍 **Health & Utils**: vérification de l'état de l'API
+
+## 🎯 Règles de Développement
+1. **Référence Backend**: TOUJOURS utiliser [postman.json](mdc:postman.json) comme référence pour les endpoints et structures de données
+2. **Service API**: Étendre [app/services/apiService.tsx](mdc:app/services/apiService.tsx) pour ajouter de nouveaux endpoints
+3. **Authentification**: Utiliser AsyncStorage pour le token JWT
+4. **Structure des Réponses**: Respecter le format `ApiResponse<T>` défini dans le service
+5. **Gestion d'Erreurs**: Inclure console.log pour le debugging avec emojis explicites
+
+## 💾 Technologies Clés
+- React Native
+- AsyncStorage pour le stockage local
+- Fetch API pour les appels HTTP
+- JWT pour l'authentification
+
+## 🚨 Points d'Attention
+- Le backend est sur un repository séparé
+- Tous les nouveaux endpoints doivent être basés sur la documentation postman.json
+- L'apiService actuel n'implémente qu'une partie des endpoints disponibles
