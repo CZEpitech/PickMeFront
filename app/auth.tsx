@@ -5,12 +5,12 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "./context/AuthContext";
 
 export default function AuthScreen() {
@@ -74,167 +74,109 @@ export default function AuthScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    <SafeAreaView
+      className="flex-1 bg-gray-50"
+      edges={["top", "left", "right"]}
     >
-      <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <View style={styles.formContainer}>
-          <Text style={styles.title}>
-            {isLogin ? "Connexion" : "Inscription"}
-          </Text>
+      <KeyboardAvoidingView
+        className="flex-1"
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView
+          className="flex-1"
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "center",
+            paddingHorizontal: 20,
+            paddingVertical: 40,
+          }}
+          showsVerticalScrollIndicator={false}
+        >
+          <View className="bg-white rounded-xl p-6 shadow-lg mx-2">
+            <Text className="text-3xl font-bold text-gray-900 text-center mb-2">
+              {isLogin ? "Connexion" : "Inscription"}
+            </Text>
 
-          <Text style={styles.subtitle}>
-            {isLogin
-              ? "Connectez-vous à votre compte"
-              : "Créez votre compte PickMe"}
-          </Text>
+            <Text className="text-base text-gray-600 text-center mb-8">
+              {isLogin
+                ? "Connectez-vous à votre compte"
+                : "Créez votre compte PickMe"}
+            </Text>
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.email}
-              onChangeText={(value) => updateFormData("email", value)}
-              placeholder="votre@email.com"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-            />
-          </View>
-
-          {!isLogin && (
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Alias</Text>
+            <View className="mb-5">
+              <Text className="text-base font-semibold text-gray-700 mb-2">
+                Email
+              </Text>
               <TextInput
-                style={styles.input}
-                value={formData.alias}
-                onChangeText={(value) => updateFormData("alias", value)}
-                placeholder="votre_alias"
+                className="border border-gray-300 rounded-lg p-3 text-base bg-gray-50"
+                value={formData.email}
+                onChangeText={(value) => updateFormData("email", value)}
+                placeholder="votre@email.com"
+                keyboardType="email-address"
                 autoCapitalize="none"
+                autoComplete="email"
               />
             </View>
-          )}
 
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Mot de passe</Text>
-            <TextInput
-              style={styles.input}
-              value={formData.password}
-              onChangeText={(value) => updateFormData("password", value)}
-              placeholder="Votre mot de passe"
-              secureTextEntry
-              autoComplete="password"
-            />
+            {!isLogin && (
+              <View className="mb-5">
+                <Text className="text-base font-semibold text-gray-700 mb-2">
+                  Alias
+                </Text>
+                <TextInput
+                  className="border border-gray-300 rounded-lg p-3 text-base bg-gray-50"
+                  value={formData.alias}
+                  onChangeText={(value) => updateFormData("alias", value)}
+                  placeholder="votre_alias"
+                  autoCapitalize="none"
+                />
+              </View>
+            )}
+
+            <View className="mb-5">
+              <Text className="text-base font-semibold text-gray-700 mb-2">
+                Mot de passe
+              </Text>
+              <TextInput
+                className="border border-gray-300 rounded-lg p-3 text-base bg-gray-50"
+                value={formData.password}
+                onChangeText={(value) => updateFormData("password", value)}
+                placeholder="Votre mot de passe"
+                secureTextEntry
+                autoComplete="password"
+              />
+            </View>
+
+            <TouchableOpacity
+              className={`bg-blue-500 rounded-lg p-4 items-center mt-2 ${loading ? "opacity-60" : ""}`}
+              onPress={handleSubmit}
+              disabled={loading}
+            >
+              <Text className="text-white text-lg font-semibold">
+                {loading
+                  ? "Chargement..."
+                  : isLogin
+                    ? "Se connecter"
+                    : "S'inscrire"}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              className="mt-5 items-center"
+              onPress={() => {
+                setIsLogin(!isLogin);
+                setFormData({ email: "", password: "", alias: "" });
+              }}
+            >
+              <Text className="text-blue-500 text-base">
+                {isLogin
+                  ? "Pas encore de compte ? S'inscrire"
+                  : "Déjà un compte ? Se connecter"}
+              </Text>
+            </TouchableOpacity>
           </View>
-
-          <TouchableOpacity
-            style={[styles.submitButton, loading && styles.buttonDisabled]}
-            onPress={handleSubmit}
-            disabled={loading}
-          >
-            <Text style={styles.submitButtonText}>
-              {loading
-                ? "Chargement..."
-                : isLogin
-                ? "Se connecter"
-                : "S'inscrire"}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.switchButton}
-            onPress={() => {
-              setIsLogin(!isLogin);
-              setFormData({ email: "", password: "", alias: "" });
-            }}
-          >
-            <Text style={styles.switchButtonText}>
-              {isLogin
-                ? "Pas encore de compte ? S'inscrire"
-                : "Déjà un compte ? Se connecter"}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    justifyContent: "center",
-    padding: 20,
-  },
-  formContainer: {
-    backgroundColor: "#ffffff",
-    borderRadius: 12,
-    padding: 24,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#666",
-    textAlign: "center",
-    marginBottom: 32,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    marginBottom: 8,
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: "#f9f9f9",
-  },
-  submitButton: {
-    backgroundColor: "#007AFF",
-    borderRadius: 8,
-    padding: 16,
-    alignItems: "center",
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  submitButtonText: {
-    color: "#ffffff",
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  switchButton: {
-    marginTop: 20,
-    alignItems: "center",
-  },
-  switchButtonText: {
-    color: "#007AFF",
-    fontSize: 16,
-  },
-});

@@ -1,13 +1,7 @@
 import { router } from "expo-router";
 import React from "react";
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import { Alert, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 import { useAuth } from "./context/AuthContext";
 
 export default function HomeScreen() {
@@ -29,202 +23,158 @@ export default function HomeScreen() {
 
   if (!user) {
     return (
-      <View style={styles.container}>
+      <SafeAreaView className="flex-1 justify-center items-center bg-gray-50">
         <Text>Chargement...</Text>
-      </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.welcomeText}>Bienvenue sur PickMe!</Text>
-        <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-          <Text style={styles.logoutButtonText}>Déconnexion</Text>
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.profileCard}>
-        <Text style={styles.cardTitle}>Mon Profil</Text>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>ID Utilisateur:</Text>
-          <Text style={styles.value}>{user.id}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Email:</Text>
-          <Text style={styles.value}>{user.email}</Text>
-        </View>
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Alias:</Text>
-          <Text style={styles.value}>{user.alias}</Text>
-        </View>
-
-        {user.birthdate && (
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Date de naissance:</Text>
-            <Text style={styles.value}>
-              {new Date(user.birthdate).toLocaleDateString("fr-FR")}
+    <SafeAreaView
+      className="flex-1 bg-gray-50"
+      edges={["top", "left", "right"]}
+    >
+      <ScrollView
+        className="flex-1"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
+        {/* Header avec safe area respectée */}
+        <View className="flex-row justify-between items-center px-5 py-4 bg-white shadow-sm">
+          <View className="flex-1 mr-4">
+            <Text className="text-2xl font-bold text-gray-900">
+              Bienvenue sur PickMe!
             </Text>
           </View>
-        )}
-
-        {user.pays && (
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Pays:</Text>
-            <Text style={styles.value}>{user.pays}</Text>
-          </View>
-        )}
-
-        {user.langue && (
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Langue:</Text>
-            <Text style={styles.value}>{user.langue}</Text>
-          </View>
-        )}
-
-        {user.description && (
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Description:</Text>
-            <Text style={styles.value}>{user.description}</Text>
-          </View>
-        )}
-
-        {user.pronous && (
-          <View style={styles.infoRow}>
-            <Text style={styles.label}>Pronoms:</Text>
-            <Text style={styles.value}>{user.pronous}</Text>
-          </View>
-        )}
-
-        <View style={styles.infoRow}>
-          <Text style={styles.label}>Profil public:</Text>
-          <Text style={styles.value}>{user.is_public ? "Oui" : "Non"}</Text>
+          <TouchableOpacity
+            className="bg-red-500 px-4 py-2 rounded-md"
+            onPress={handleLogout}
+          >
+            <Text className="text-white font-semibold">Déconnexion</Text>
+          </TouchableOpacity>
         </View>
-      </View>
 
-      <View style={styles.actionsCard}>
-        <Text style={styles.cardTitle}>Actions rapides</Text>
+        {/* Profil Section */}
+        <View className="bg-white m-5 p-5 rounded-xl shadow-lg">
+          <Text className="text-xl font-bold text-gray-900 mb-4">
+            Mon Profil
+          </Text>
 
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionButtonText}>Modifier le profil</Text>
-        </TouchableOpacity>
+          <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
+            <Text className="text-base font-semibold text-gray-700 flex-1">
+              ID Utilisateur:
+            </Text>
+            <Text className="text-base text-gray-600 flex-2 text-right">
+              {user.id}
+            </Text>
+          </View>
 
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionButtonText}>Voir mes images</Text>
-        </TouchableOpacity>
+          <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
+            <Text className="text-base font-semibold text-gray-700 flex-1">
+              Email:
+            </Text>
+            <Text className="text-base text-gray-600 flex-2 text-right">
+              {user.email}
+            </Text>
+          </View>
 
-        <TouchableOpacity style={styles.actionButton}>
-          <Text style={styles.actionButtonText}>Mes amis</Text>
-        </TouchableOpacity>
-      </View>
-    </ScrollView>
+          <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
+            <Text className="text-base font-semibold text-gray-700 flex-1">
+              Alias:
+            </Text>
+            <Text className="text-base text-gray-600 flex-2 text-right">
+              {user.alias}
+            </Text>
+          </View>
+
+          {user.birthdate && (
+            <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
+              <Text className="text-base font-semibold text-gray-700 flex-1">
+                Date de naissance:
+              </Text>
+              <Text className="text-base text-gray-600 flex-2 text-right">
+                {new Date(user.birthdate).toLocaleDateString("fr-FR")}
+              </Text>
+            </View>
+          )}
+
+          {user.pays && (
+            <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
+              <Text className="text-base font-semibold text-gray-700 flex-1">
+                Pays:
+              </Text>
+              <Text className="text-base text-gray-600 flex-2 text-right">
+                {user.pays}
+              </Text>
+            </View>
+          )}
+
+          {user.langue && (
+            <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
+              <Text className="text-base font-semibold text-gray-700 flex-1">
+                Langue:
+              </Text>
+              <Text className="text-base text-gray-600 flex-2 text-right">
+                {user.langue}
+              </Text>
+            </View>
+          )}
+
+          {user.description && (
+            <View className="py-3 border-b border-gray-100">
+              <Text className="text-base font-semibold text-gray-700 mb-2">
+                Description:
+              </Text>
+              <Text className="text-base text-gray-600">
+                {user.description}
+              </Text>
+            </View>
+          )}
+
+          {user.pronous && (
+            <View className="flex-row justify-between items-center py-3 border-b border-gray-100">
+              <Text className="text-base font-semibold text-gray-700 flex-1">
+                Pronoms:
+              </Text>
+              <Text className="text-base text-gray-600 flex-2 text-right">
+                {user.pronous}
+              </Text>
+            </View>
+          )}
+
+          <View className="flex-row justify-between items-center py-3">
+            <Text className="text-base font-semibold text-gray-700 flex-1">
+              Profil public:
+            </Text>
+            <Text className="text-base text-gray-600 flex-2 text-right">
+              {user.is_public ? "Oui" : "Non"}
+            </Text>
+          </View>
+        </View>
+
+        {/* Actions Section */}
+        <View className="bg-white mx-5 mb-5 p-5 rounded-xl shadow-lg">
+          <Text className="text-xl font-bold text-gray-900 mb-4">
+            Actions rapides
+          </Text>
+
+          <TouchableOpacity className="bg-blue-500 p-4 rounded-lg items-center mb-3">
+            <Text className="text-white text-base font-semibold">
+              Modifier le profil
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity className="bg-blue-500 p-4 rounded-lg items-center mb-3">
+            <Text className="text-white text-base font-semibold">
+              Voir mes images
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity className="bg-blue-500 p-4 rounded-lg items-center">
+            <Text className="text-white text-base font-semibold">Mes amis</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8f9fa",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    paddingTop: 60,
-    backgroundColor: "#ffffff",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  welcomeText: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-  },
-  logoutButton: {
-    backgroundColor: "#ff3b30",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 6,
-  },
-  logoutButtonText: {
-    color: "#ffffff",
-    fontWeight: "600",
-  },
-  profileCard: {
-    backgroundColor: "#ffffff",
-    margin: 20,
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  actionsCard: {
-    backgroundColor: "#ffffff",
-    margin: 20,
-    marginTop: 0,
-    padding: 20,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#1a1a1a",
-    marginBottom: 16,
-  },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f0f0f0",
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#333",
-    flex: 1,
-  },
-  value: {
-    fontSize: 16,
-    color: "#666",
-    flex: 2,
-    textAlign: "right",
-  },
-  actionButton: {
-    backgroundColor: "#007AFF",
-    padding: 16,
-    borderRadius: 8,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  actionButtonText: {
-    color: "#ffffff",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-});
