@@ -2,6 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const BASE_URL = "http://87.106.108.25:3456/api/v1";
 
+// Garder l'interface ApiResponse pour la compatibilité avec le reste du code
 interface ApiResponse<T = any> {
   success: boolean;
   data?: T;
@@ -62,6 +63,12 @@ class ApiService {
     alias: string
   ): Promise<ApiResponse> {
     try {
+      console.log("📝 Register attempt:", {
+        email,
+        alias,
+        baseUrl: BASE_URL,
+      });
+
       const response = await fetch(`${BASE_URL}/auth/register`, {
         method: "POST",
         headers: {
@@ -71,17 +78,52 @@ class ApiService {
       });
 
       const data = await response.json();
-
-      return {
-        success: response.ok,
-        data: data.data,
+      console.log("📝 Register response:", {
+        status: response.status,
+        success: data.success,
         message: data.message,
-      };
-    } catch (error) {
-      console.error("Register API error:", error);
+      });
+
+      if (response.ok && data.success) {
+        console.log("✅ Registration successful");
+        return {
+          success: true,
+          data: data.data,
+          message: data.message || "Inscription réussie",
+        };
+      }
+
+      // Gestion des erreurs spécifiques du backend
+      let errorMessage = "Erreur lors de l'inscription";
+
+      if (response.status === 400) {
+        if (data.message?.includes("email")) {
+          errorMessage = "Cette adresse email est déjà utilisée";
+        } else if (data.message?.includes("alias")) {
+          errorMessage = "Cet alias est déjà pris";
+        } else if (data.message?.includes("password")) {
+          errorMessage = "Le mot de passe ne respecte pas les critères requis";
+        } else {
+          errorMessage = data.message || "Données d'inscription invalides";
+        }
+      } else if (response.status === 422) {
+        errorMessage = "Format des données incorrect";
+      } else if (response.status >= 500) {
+        errorMessage = "Erreur serveur, veuillez réessayer plus tard";
+      } else {
+        errorMessage = data.message || errorMessage;
+      }
+
+      console.log("❌ Registration failed:", errorMessage);
       return {
         success: false,
-        message: "Erreur de réseau",
+        message: errorMessage,
+      };
+    } catch (error) {
+      console.error("❌ Register API error:", error);
+      return {
+        success: false,
+        message: "Erreur de réseau, vérifiez votre connexion",
       };
     }
   }

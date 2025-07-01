@@ -23,7 +23,7 @@ interface AuthContextType {
     email: string,
     password: string,
     alias: string
-  ) => Promise<boolean>;
+  ) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
 }
@@ -107,13 +107,64 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
     email: string,
     password: string,
     alias: string
-  ): Promise<boolean> => {
+  ): Promise<{ success: boolean; message?: string }> => {
     try {
+      console.log("📝 Starting registration process...");
+
+      // Validation côté client
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) {
+        console.log("❌ Invalid email format");
+        return {
+          success: false,
+          message: "Format d'email invalide",
+        };
+      }
+
+      if (password.length < 6) {
+        console.log("❌ Password too short");
+        return {
+          success: false,
+          message: "Le mot de passe doit contenir au moins 6 caractères",
+        };
+      }
+
+      if (alias.length < 3) {
+        console.log("❌ Alias too short");
+        return {
+          success: false,
+          message: "L'alias doit contenir au moins 3 caractères",
+        };
+      }
+
+      if (!/^[a-zA-Z0-9_]+$/.test(alias)) {
+        console.log("❌ Invalid alias format");
+        return {
+          success: false,
+          message:
+            "L'alias ne peut contenir que des lettres, chiffres et underscores",
+        };
+      }
+
+      console.log("✅ Client validation passed");
       const response = await apiService.register(email, password, alias);
-      return response.success;
+
+      if (response.success) {
+        console.log("✅ Registration successful in context");
+      } else {
+        console.log("❌ Registration failed in context:", response.message);
+      }
+
+      return {
+        success: response.success,
+        message: response.message,
+      };
     } catch (error) {
-      console.error("Register error:", error);
-      return false;
+      console.error("❌ Register error in context:", error);
+      return {
+        success: false,
+        message: "Une erreur inattendue est survenue",
+      };
     }
   };
 
