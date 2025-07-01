@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { apiService } from "../../services/apiService";
 
 interface Friend {
   id: string;
@@ -60,14 +61,22 @@ export const useFriends = (): UseFriendsReturn => {
     setError(null);
     try {
       console.log("👥 Loading friends...");
-      // TODO: Implémenter l'appel API une fois que l'endpoint sera ajouté à apiService
-      // const response = await apiService.getFriends();
-      // if (response.success && response.data) {
-      //   setFriends(response.data.friends || []);
-      //   console.log("✅ Friends loaded successfully");
-      // }
-      console.log("🔄 Friends endpoint not implemented yet");
-      setFriends([]); // Temporaire
+      const response = await apiService.getFriends("accepted");
+      if (response.success && response.data) {
+        // Gestion flexible de la structure de données
+        const friendsData = response.data.friends || response.data || [];
+        setFriends(Array.isArray(friendsData) ? friendsData : []);
+        console.log(
+          `✅ Friends loaded successfully: ${Array.isArray(friendsData) ? friendsData.length : 0} friends`
+        );
+      } else {
+        console.log("⚠️ No friends data or unsuccessful response");
+        setFriends([]);
+        // Ne pas considérer cela comme une erreur si c'est juste qu'il n'y a pas d'amis
+        if (response.message && !response.message.includes("aucun")) {
+          setError(response.message);
+        }
+      }
     } catch (err) {
       const errorMessage = "Erreur lors du chargement des amis";
       setError(errorMessage);
@@ -81,14 +90,22 @@ export const useFriends = (): UseFriendsReturn => {
     setError(null);
     try {
       console.log("📨 Loading friend requests...");
-      // TODO: Implémenter l'appel API
-      // const response = await apiService.getFriendRequests();
-      // if (response.success && response.data) {
-      //   setFriendRequests(response.data.requests || []);
-      //   console.log("✅ Friend requests loaded successfully");
-      // }
-      console.log("🔄 Friend requests endpoint not implemented yet");
-      setFriendRequests([]); // Temporaire
+      const response = await apiService.getFriendRequests();
+      if (response.success && response.data) {
+        // Gestion flexible de la structure de données
+        const requestsData = response.data.requests || response.data || [];
+        setFriendRequests(Array.isArray(requestsData) ? requestsData : []);
+        console.log(
+          `✅ Friend requests loaded successfully: ${Array.isArray(requestsData) ? requestsData.length : 0} requests`
+        );
+      } else {
+        console.log("⚠️ No friend requests data or unsuccessful response");
+        setFriendRequests([]);
+        // Ne pas considérer cela comme une erreur si c'est juste qu'il n'y a pas de demandes
+        if (response.message && !response.message.includes("aucun")) {
+          setError(response.message);
+        }
+      }
     } catch (err) {
       const errorMessage = "Erreur lors du chargement des demandes d'amitié";
       setError(errorMessage);
@@ -118,17 +135,20 @@ export const useFriends = (): UseFriendsReturn => {
   const sendFriendRequest = async (userId: string): Promise<boolean> => {
     try {
       console.log(`📨 Sending friend request to user ${userId}...`);
-      // TODO: Implémenter l'appel API
-      // const response = await apiService.sendFriendRequest(userId);
-      // if (response.success) {
-      //   console.log("✅ Friend request sent successfully");
-      //   await loadSentRequests(); // Recharger les demandes envoyées
-      //   return true;
-      // }
-      console.log("🔄 Send friend request endpoint not implemented yet");
-      return false;
+      const response = await apiService.sendFriendRequest(userId);
+      if (response.success) {
+        console.log("✅ Friend request sent successfully");
+        await loadSentRequests(); // Recharger les demandes envoyées
+        return true;
+      } else {
+        setError(
+          response.message || "Erreur lors de l'envoi de la demande d'amitié"
+        );
+        return false;
+      }
     } catch (err) {
       console.error("❌ Error sending friend request:", err);
+      setError("Erreur lors de l'envoi de la demande d'amitié");
       return false;
     }
   };
@@ -136,17 +156,27 @@ export const useFriends = (): UseFriendsReturn => {
   const acceptFriendRequest = async (requestId: string): Promise<boolean> => {
     try {
       console.log(`✅ Accepting friend request ${requestId}...`);
-      // TODO: Implémenter l'appel API
-      // const response = await apiService.acceptFriendRequest(requestId);
-      // if (response.success) {
-      //   console.log("✅ Friend request accepted successfully");
-      //   await Promise.all([loadFriends(), loadFriendRequests()]);
-      //   return true;
-      // }
-      console.log("🔄 Accept friend request endpoint not implemented yet");
-      return false;
+      const response = await apiService.respondToFriendRequest(
+        requestId,
+        "accepted"
+      );
+      if (response.success) {
+        console.log("✅ Friend request accepted successfully");
+        // Espacer les appels pour éviter le rate limiting
+        await loadFriends();
+        await new Promise((resolve) => setTimeout(resolve, 200));
+        await loadFriendRequests();
+        return true;
+      } else {
+        setError(
+          response.message ||
+            "Erreur lors de l'acceptation de la demande d'amitié"
+        );
+        return false;
+      }
     } catch (err) {
       console.error("❌ Error accepting friend request:", err);
+      setError("Erreur lors de l'acceptation de la demande d'amitié");
       return false;
     }
   };
@@ -154,17 +184,23 @@ export const useFriends = (): UseFriendsReturn => {
   const rejectFriendRequest = async (requestId: string): Promise<boolean> => {
     try {
       console.log(`❌ Rejecting friend request ${requestId}...`);
-      // TODO: Implémenter l'appel API
-      // const response = await apiService.rejectFriendRequest(requestId);
-      // if (response.success) {
-      //   console.log("✅ Friend request rejected successfully");
-      //   await loadFriendRequests();
-      //   return true;
-      // }
-      console.log("🔄 Reject friend request endpoint not implemented yet");
-      return false;
+      const response = await apiService.respondToFriendRequest(
+        requestId,
+        "blocked"
+      );
+      if (response.success) {
+        console.log("✅ Friend request rejected successfully");
+        await loadFriendRequests();
+        return true;
+      } else {
+        setError(
+          response.message || "Erreur lors du rejet de la demande d'amitié"
+        );
+        return false;
+      }
     } catch (err) {
       console.error("❌ Error rejecting friend request:", err);
+      setError("Erreur lors du rejet de la demande d'amitié");
       return false;
     }
   };
@@ -172,17 +208,18 @@ export const useFriends = (): UseFriendsReturn => {
   const removeFriend = async (friendId: string): Promise<boolean> => {
     try {
       console.log(`🗑️ Removing friend ${friendId}...`);
-      // TODO: Implémenter l'appel API
-      // const response = await apiService.removeFriend(friendId);
-      // if (response.success) {
-      //   console.log("✅ Friend removed successfully");
-      //   await loadFriends();
-      //   return true;
-      // }
-      console.log("🔄 Remove friend endpoint not implemented yet");
-      return false;
+      const response = await apiService.removeFriend(friendId);
+      if (response.success) {
+        console.log("✅ Friend removed successfully");
+        await loadFriends();
+        return true;
+      } else {
+        setError(response.message || "Erreur lors de la suppression de l'ami");
+        return false;
+      }
     } catch (err) {
       console.error("❌ Error removing friend:", err);
+      setError("Erreur lors de la suppression de l'ami");
       return false;
     }
   };
@@ -190,17 +227,21 @@ export const useFriends = (): UseFriendsReturn => {
   const blockUser = async (userId: string): Promise<boolean> => {
     try {
       console.log(`🚫 Blocking user ${userId}...`);
-      // TODO: Implémenter l'appel API
-      // const response = await apiService.blockUser(userId);
-      // if (response.success) {
-      //   console.log("✅ User blocked successfully");
-      //   await loadFriends();
-      //   return true;
-      // }
-      console.log("🔄 Block user endpoint not implemented yet");
-      return false;
+      const response = await apiService.respondToFriendRequest(
+        userId,
+        "blocked"
+      );
+      if (response.success) {
+        console.log("✅ User blocked successfully");
+        await loadFriends();
+        return true;
+      } else {
+        setError(response.message || "Erreur lors du blocage de l'utilisateur");
+        return false;
+      }
     } catch (err) {
       console.error("❌ Error blocking user:", err);
+      setError("Erreur lors du blocage de l'utilisateur");
       return false;
     }
   };
@@ -225,11 +266,22 @@ export const useFriends = (): UseFriendsReturn => {
   const refreshData = async () => {
     setRefreshing(true);
     try {
-      await Promise.all([
-        loadFriends(),
-        loadFriendRequests(),
-        loadSentRequests(),
-      ]);
+      console.log(
+        "🔄 Starting sequential data refresh to avoid rate limiting..."
+      );
+
+      // Charger les amis en premier
+      await loadFriends();
+
+      // Attendre 300ms avant de charger les demandes d'amitié
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await loadFriendRequests();
+
+      // Attendre encore 300ms avant de charger les demandes envoyées
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      await loadSentRequests();
+
+      console.log("✅ All friend data refreshed successfully");
     } finally {
       setRefreshing(false);
     }

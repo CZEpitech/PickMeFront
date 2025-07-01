@@ -12,6 +12,7 @@ PickMe est une application mobile React Native de réseau social de rencontres.
 - **Frontend**: React Native (ce repository)
 - **Backend**: Repository séparé, API documentée dans [postman.json](mdc:postman.json)
 - **Service API**: Centralisé dans [app/services/apiService.tsx](mdc:app/services/apiService.tsx)
+- **Hooks**: Organisés par domaines dans [app/hooks/](mdc:app/hooks) avec export centralisé
 
 ## 🔗 Configuration Backend
 - **URL de base**: `http://87.106.108.25:3456/api/v1`
@@ -32,14 +33,136 @@ PickMe est une application mobile React Native de réseau social de rencontres.
 3. **Authentification**: Utiliser AsyncStorage pour le token JWT
 4. **Structure des Réponses**: Respecter le format `ApiResponse<T>` défini dans le service
 5. **Gestion d'Erreurs**: Inclure console.log pour le debugging avec emojis explicites
+6. **Séparation des Préoccupations**: Extraire toute logique métier dans des hooks spécialisés
+
+## 🪝 Architecture des Hooks
+### Structure Organisée par Domaines :
+```
+app/hooks/
+├── auth/
+│   └── useAuthForm.ts          # Logique d'authentification
+├── profile/
+│   └── useProfileForm.ts       # Modification de profil
+├── images/
+│   └── useUserImages.ts        # Gestion des images utilisateur
+├── friends/
+│   └── useFriends.ts           # Système d'amitié
+├── ui/
+│   └── useDatePicker.ts        # Composants UI réutilisables
+└── index.ts                    # Export centralisé
+```
+
+### Conventions des Hooks :
+- **Nommage**: `use[Domaine][Fonction]` (ex: `useAuthForm`, `useProfileForm`)
+- **Structure**: Interfaces TypeScript + logique métier + gestion d'état
+- **Export**: Toujours via `app/hooks/index.ts` pour import centralisé
+- **Séparation**: Logique métier dans hooks, UI pure dans composants
+
+## 🎨 Standards UI/UX
+
+### Design System :
+- **SafeAreaView**: OBLIGATOIRE sur toutes les pages principales
+- **Headers Personnalisés**: Navigation claire avec icônes Ionicons
+- **Thème Sombre**: `textColor="#FFFFFF"` et `themeVariant="dark"` par défaut
+- **Modals**: Toujours avec overlay, animation `slide`, boutons Confirmer/Annuler
+
+### Composants Standards :
+- **Boutons**: Ionicons modernes (checkmark, close, chevron-back, etc.)
+- **Cards**: Padding interne optimisé, coins arrondis
+- **Inputs**: Validation en temps réel avec messages d'erreur explicites
+- **DatePicker**: Modal overlay avec validation d'âge (18-120 ans)
+
+### Espacement & Layout :
+- **Marges**: Design "bord à bord" avec padding interne sur cards
+- **Navigation**: Headers avec retour + titre + action rapide
+- **Responsivité**: Optimisé mobile-first
+
+## 📝 Conventions de Code
+
+### Debugging & Logs :
+```typescript
+// ✅ Correct - Emojis explicites
+console.log("✅ Success:", data);
+console.log("❌ Error:", error);
+console.log("🔄 Loading:", isLoading);
+```
+
+### Gestion d'Erreurs :
+- **Alert.alert()** pour erreurs utilisateur
+- **console.log avec emojis** pour debugging développeur
+- **Try-catch** obligatoire sur tous les appels API
+- **Messages explicites** (pas de codes d'erreur techniques)
+
+### TypeScript :
+- **Interfaces** définies pour chaque domaine métier
+- **Types stricts** pour les réponses API (`ApiResponse<T>`)
+- **Props typées** pour tous les composants
+- **Enums** pour les constantes (COUNTRIES, LANGUAGES, PRONOUNS)
+
+### Validation des Données :
+- **Âge**: 18 ans minimum, 120 ans maximum (calcul précis avec mois/jours)
+- **Email**: Format valide + vérification backend
+- **Mots de passe**: Critères de sécurité définis
+- **Champs obligatoires**: Validation côté client + serveur
 
 ## 💾 Technologies Clés
 - React Native
 - AsyncStorage pour le stockage local
 - Fetch API pour les appels HTTP
 - JWT pour l'authentification
+- TypeScript pour le typage strict
+- Ionicons pour les icônes modernes
+
+## 📋 État d'Avancement & Priorités
+
+### ✅ Implémenté :
+- Architecture de base + navigation
+- Authentification complète (login/register)
+- Profil utilisateur (affichage + modification)
+- Structure des hooks par domaines
+- Service API centralisé (partiellement)
+
+### ⚠️ En Cours :
+- **apiService.tsx**: Seulement 5/15+ endpoints implémentés
+- Migration des composants vers les nouveaux hooks
+
+### 🚧 À Implémenter :
+1. **Endpoints API manquants** :
+   - Friends (add, accept, reject, remove, block)
+   - Images (add, delete, pin)
+   - Users & Stats (search, statistics)
+   - Health Check (status API)
+
+2. **Pages à développer** :
+   - `friends.tsx` (actuellement placeholder)
+   - `home.tsx` (feed principal)
+   - `discover.tsx` (découverte utilisateurs)
+
+3. **Fonctionnalités avancées** :
+   - Système de matching
+   - Chat en temps réel
+   - Notifications push
 
 ## 🚨 Points d'Attention
 - Le backend est sur un repository séparé
 - Tous les nouveaux endpoints doivent être basés sur la documentation postman.json
 - L'apiService actuel n'implémente qu'une partie des endpoints disponibles
+- **Score de conformité actuel : 7/10**
+
+## 🔧 Commandes de Développement
+```bash
+# Installation
+npm install
+
+# Développement
+npm start
+
+# Hooks - Toujours importer depuis l'index centralisé
+import { useAuthForm, useProfileForm } from '@/hooks';
+```
+
+## 🎯 Objectifs à Court Terme
+1. Compléter tous les endpoints dans `apiService.tsx`
+2. Finaliser la migration vers les hooks organisés
+3. Implémenter les pages friends/home/discover
+4. Atteindre 10/10 de conformité avec les règles projet

@@ -12,6 +12,7 @@ export { useFriends } from "./friends/useFriends";
 
 // 🎨 UI Hooks
 export { useDatePicker } from "./ui/useDatePicker";
+export { useUserSearch } from "./ui/useUserSearch";
 
 // Re-export AuthContext hook pour faciliter l'import
 export { useAuth } from "../context/AuthContext";

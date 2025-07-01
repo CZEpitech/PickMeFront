@@ -13,7 +13,7 @@ import {
   View,
 } from "react-native";
 import { ScreenWrapper } from "../components";
-import { useAuth, useUserImages } from "../hooks";
+import { useAuth, useFriends, useUserImages } from "../hooks";
 
 interface UserImage {
   id: string;
@@ -26,6 +26,7 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const { images, loading, refreshing, refreshImages, getRecentPhotosCount } =
     useUserImages();
+  const { getFriendsCount } = useFriends();
   const screenWidth = Dimensions.get("window").width;
 
   const onRefresh = refreshImages;
@@ -159,7 +160,9 @@ export default function ProfileScreen() {
         </View>
 
         <View className="items-center mx-8">
-          <Text className="text-white text-2xl font-bold">0</Text>
+          <Text className="text-white text-2xl font-bold">
+            {getFriendsCount()}
+          </Text>
           <Text className="text-text-muted text-sm">Amis</Text>
         </View>
       </View>
