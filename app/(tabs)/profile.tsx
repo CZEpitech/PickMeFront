@@ -12,9 +12,10 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import AvatarPickerOverlay from "../components/AvatarPickerOverlay";
+import FriendsListOverlay from "../components/FriendsListOverlay";
 import ProfileEditOverlay from "../components/ProfileEditOverlay";
 import { authService, User } from "../services/authService";
-import { Friend, friendsService } from "../services/friendsService";
+import { FriendFlat, friendsService } from "../services/friendsService";
 import { ImageItem, imagesService } from "../services/imagesService";
 import { ExtendedProfile, profileService } from "../services/profileService";
 import { tokenStorage } from "../services/tokenStorage";
@@ -22,7 +23,7 @@ import { tokenStorage } from "../services/tokenStorage";
 export default function Profile() {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<ExtendedProfile | null>(null);
-  const [friends, setFriends] = useState<Friend[]>([]);
+  const [friends, setFriends] = useState<FriendFlat[]>([]);
   const [images, setImages] = useState<ImageItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -30,6 +31,7 @@ export default function Profile() {
   const [imagesCount, setImagesCount] = useState(0);
   const [showEditOverlay, setShowEditOverlay] = useState(false);
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [showFriendsOverlay, setShowFriendsOverlay] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -57,11 +59,12 @@ export default function Profile() {
       setProfile(authResult.data.profile || null);
 
       // Load additional profile data
-      const [profileResult, friendsResult, imagesResult] =
+      const [profileResult, friendsResult, imagesResult, fullFriendsResult] =
         await Promise.allSettled([
           profileService.getMyProfile(token),
-          friendsService.getFriendsList(token, "accepted", 1, 5),
+          friendsService.getFriendsList(token, "accepted", 1, 5), // Pour l'affichage preview
           imagesService.getMyImages(token, 1, 6),
+          friendsService.getFriendsList(token, "accepted", 1, 100), // Pour compter le total
         ]);
 
       // Handle profile data
@@ -71,10 +74,32 @@ export default function Profile() {
         );
       }
 
-      // Handle friends data
+      // Handle friends data (preview for display)
       if (friendsResult.status === "fulfilled" && friendsResult.value.success) {
-        setFriends(friendsResult.value.data || []);
-        setFriendsCount(friendsResult.value.data?.length || 0);
+        const previewFriends = friendsResult.value.data || [];
+        console.log("👫 [PROFILE] Preview friends loaded:", previewFriends.length);
+        try {
+          console.log("👫 [PROFILE] Preview friends:", previewFriends.map(f => `@${f?.alias || 'unknown'}`).join(", "));
+        } catch (e) {
+          console.log("👫 [PROFILE] Preview friends data structure:", JSON.stringify(previewFriends[0] || {}, null, 2));
+        }
+        setFriends(previewFriends);
+      } else if (friendsResult.status === "fulfilled") {
+        console.log("❌ [PROFILE] Preview friends load failed:", friendsResult.value.message);
+      }
+
+      // Handle total friends count
+      if (fullFriendsResult.status === "fulfilled" && fullFriendsResult.value.success) {
+        const totalFriends = fullFriendsResult.value.data || [];
+        console.log("📊 [PROFILE] Total friends loaded:", totalFriends.length);
+        try {
+          console.log("📊 [PROFILE] All friends:", totalFriends.map(f => `@${f?.alias || 'unknown'}`).join(", "));
+        } catch (e) {
+          console.log("📊 [PROFILE] Total friends data structure:", JSON.stringify(totalFriends[0] || {}, null, 2));
+        }
+        setFriendsCount(totalFriends.length);
+      } else if (fullFriendsResult.status === "fulfilled") {
+        console.log("❌ [PROFILE] Total friends load failed:", fullFriendsResult.value.message);
       }
 
       // Handle images data
@@ -134,7 +159,7 @@ export default function Profile() {
   };
 
   const handleViewFriends = () => {
-    Alert.alert("Amis", "Page des amis en cours de développement");
+    setShowFriendsOverlay(true);
   };
 
   const handleViewImages = () => {
@@ -395,6 +420,12 @@ export default function Profile() {
           onClose={() => setShowAvatarPicker(false)}
           currentAvatar={profile?.avatar}
           onAvatarUpdate={handleAvatarUpdate}
+        />
+
+        {/* Friends List Overlay */}
+        <FriendsListOverlay
+          visible={showFriendsOverlay}
+          onClose={() => setShowFriendsOverlay(false)}
         />
       </SafeAreaView>
     </View>

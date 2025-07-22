@@ -6,8 +6,8 @@ module.exports = {
     extend: {
       colors: {
         // === COULEURS PRINCIPALES ===
-        "primary-bg": "#8894B9", // Bleu-gris principal (fond)
-        "primary-text": "#F5C74D", // Jaune - UNIQUEMENT pour éléments hyper importants
+        "primary-bg": "#8894B9", // Bleu-gris principal (fond) --- UTILE ---
+        "primary-text": "#F5C74D", // Jaune - UNIQUEMENT pour éléments hyper importants --- UTILE ---
         "primary-variant": "#A3A3B4", // Gris-bleu secondaire
 
         // === VARIATIONS DU FOND PRINCIPAL ===
@@ -16,25 +16,26 @@ module.exports = {
         "primary-bg-darker": "#4A5578", // Version très foncée
 
         // === HIÉRARCHIE DE GRIS POUR TEXTE ===
-        "text-primary": "#FFFFFF", // Blanc - Texte principal sur fond sombre
-        "text-secondary": "#C4C4D1", // Gris clair - Texte secondaire
-        "text-muted": "#A3A3B4", // Gris moyen - Métadonnées, labels
+        "text-primary": "#FFFFFF", // Blanc - Texte principal sur fond sombre --- UTILE ---
+        "text-secondary": "#C4C4D1", // Gris clair - Texte secondaire --- UTILE ---
+        "text-muted": "#A3A3B4", // Gris moyen - Métadonnées, labels --- UTILE ---
         "text-disabled": "#7A7A8A", // Gris foncé - Éléments inactifs
 
         // === SURFACES & ÉLÉVATION ===
-        "surface-elevated": "#9BA8CD", // Surface surélevée (cards, modals)
+        "surface-elevated": "#9BA8CD", // Surface surélevée (cards, modals) --- UTILE ---
         "surface-pressed": "#7A89B0", // Surface pressée (boutons actifs)
         "surface-subtle": "#8A96B8", // Surface subtile (hover states)
 
         // === BORDURES ===
-        "border-subtle": "#B8C1D9", // Bordures discrètes
+        "border-subtle": "#B8C1D9", // Bordures discrètes --- UTILE ---
         "border-strong": "#8A96B8", // Bordures marquées
         "border-focus": "#F5C74D", // Bordures de focus (jaune)
 
         // === ÉTATS NEUTRES ===
         "neutral-light": "#E8E8F0", // Très clair - Backgrounds subtils
         neutral: "#C4C4D1", // Moyen - Dividers
-        "neutral-dark": "#7A7A8A", // Foncé - Icons inactives
+        "neutral-dark": "#7A7A8A", // Foncé - Icons inactives 
+        // 00FF0B
       },
     },
   },

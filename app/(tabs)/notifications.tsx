@@ -13,15 +13,18 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { friendsService } from "../services/friendsService";
 import { tokenStorage } from "../services/tokenStorage";
-import { SearchUser, usersService } from "../services/usersService";
+import { SearchUserFlat, usersService } from "../services/usersService";
 
 export default function Search() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchUserFlat[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [friendRequestsInProgress, setFriendRequestsInProgress] = useState<
+    Set<string>
+  >(new Set());
+  const [friendRequestsSent, setFriendRequestsSent] = useState<
     Set<string>
   >(new Set());
   const [searchStats, setSearchStats] = useState({
@@ -52,23 +55,30 @@ export default function Search() {
       const token = await tokenStorage.getToken();
       if (!token) return;
 
-      console.log("🔍 Starting search for:", query);
+      console.log("🔍 Starting search for:", query, "| Length:", query.length, "| Page:", page);
       const result = await usersService.searchUsers(token, query, page, 20);
 
       if (result.success && result.data) {
+        let updatedResults;
+        
         if (page === 1) {
+          updatedResults = result.data;
           setSearchResults(result.data);
         } else {
-          setSearchResults((prev) => [...prev, ...(result.data || [])]);
+          // Éviter les doublons en filtrant les IDs déjà présents
+          const existingIds = new Set(searchResults.map(user => user.id));
+          const newUniqueResults = result.data.filter(user => !existingIds.has(user.id));
+          updatedResults = [...searchResults, ...newUniqueResults];
+          setSearchResults(updatedResults);
         }
 
         setSearchStats({
-          totalResults: result.data.length,
+          totalResults: updatedResults.length,
           currentPage: page,
-          hasMore: result.data.length === 20, // Si on reçoit 20 résultats, il y en a peut-être plus
+          hasMore: result.data.length === 20,
         });
 
-        console.log("✅ Search completed:", result.data.length, "results");
+        console.log("✅ Search completed:", result.data.length, "new results, total:", updatedResults.length);
       } else {
         console.log("❌ Search failed:", result.message);
         if (page === 1) {
@@ -80,6 +90,7 @@ export default function Search() {
       console.log("💥 Search error:", error);
       if (page === 1) {
         setSearchResults([]);
+        setSearchStats({ totalResults: 0, currentPage: 1, hasMore: false });
       }
     } finally {
       setIsSearching(false);
@@ -94,19 +105,24 @@ export default function Search() {
       const token = await tokenStorage.getToken();
       if (!token) return;
 
-      console.log("👥 Sending friend request to:", userAlias);
+      console.log("👥 Sending friend request to:", userAlias, "with ID:", userId);
       const result = await friendsService.addFriend(token, userId);
 
       if (result.success) {
         Alert.alert(
-          "Demande envoyée",
-          `Votre demande d'amitié a été envoyée à @${userAlias}`
+          "✅ Demande envoyée",
+          `Votre demande d'amitié a été envoyée à @${userAlias}`,
+          [{ text: "OK", style: "default" }]
         );
-        console.log("✅ Friend request sent successfully");
+        console.log("✅ Friend request sent successfully to", userAlias);
+        
+        // Marquer cet utilisateur comme ayant reçu une demande
+        setFriendRequestsSent((prev) => new Set([...prev, userId]));
       } else {
         Alert.alert(
-          "Erreur",
-          result.message || "Impossible d'envoyer la demande d'amitié"
+          "❌ Erreur",
+          result.message || "Impossible d'envoyer la demande d'amitié",
+          [{ text: "Réessayer", style: "default" }]
         );
         console.log("❌ Friend request failed:", result.message);
       }
@@ -123,7 +139,7 @@ export default function Search() {
     }
   };
 
-  const handleViewProfile = (user: SearchUser) => {
+  const handleViewProfile = (user: SearchUserFlat) => {
     Alert.alert(
       `Profil de @${user.alias}`,
       `${user.description || "Aucune description"}\n\nPays: ${user.pays || "Non spécifié"}\nLangue: ${user.langue || "Non spécifiée"}\n\nFonctionnalité de consultation complète en cours de développement.`
@@ -131,7 +147,7 @@ export default function Search() {
   };
 
   const handleLoadMore = () => {
-    if (searchQuery.trim() && searchStats.hasMore && !isSearching) {
+    if (searchQuery.trim() && searchStats.hasMore && !isSearching && searchResults.length > 0) {
       handleSearch(searchQuery.trim(), searchStats.currentPage + 1);
     }
   };
@@ -148,6 +164,7 @@ export default function Search() {
     setSearchQuery("");
     setSearchResults([]);
     setSearchStats({ totalResults: 0, currentPage: 1, hasMore: true });
+    setFriendRequestsSent(new Set()); // Reset sent requests when clearing search
   };
 
   return (
@@ -242,20 +259,6 @@ export default function Search() {
                 <Text className="text-text-muted text-center mt-2 opacity-70">
                   Tapez au moins 2 caractères pour commencer la recherche
                 </Text>
-
-                <View className="bg-surface-elevated rounded-[15px] p-4 mt-6 w-full border border-border-subtle">
-                  <View className="flex-row items-center mb-2">
-                    <Ionicons name="bulb" size={20} color="#A3A3B4" />
-                    <Text className="text-text-primary font-semibold ml-2">
-                      Conseils de recherche
-                    </Text>
-                  </View>
-                  <Text className="text-text-secondary text-sm leading-5">
-                    • Recherchez par pseudo (@utilisateur){"\n"}• Utilisez des
-                    mots-clés simples{"\n"}• La recherche est automatique{"\n"}•
-                    Tirez vers le bas pour actualiser
-                  </Text>
-                </View>
               </View>
             )}
 
@@ -363,17 +366,23 @@ export default function Search() {
                     <TouchableOpacity
                       onPress={(e) => {
                         e.stopPropagation();
-                        handleAddFriend(user.id, user.alias);
+                        if (!friendRequestsSent.has(user.id)) {
+                          handleAddFriend(user.id, user.alias);
+                        }
                       }}
-                      disabled={friendRequestsInProgress.has(user.id)}
+                      disabled={friendRequestsInProgress.has(user.id) || friendRequestsSent.has(user.id)}
                       className={`w-10 h-10 rounded-full items-center justify-center border ${
                         friendRequestsInProgress.has(user.id)
                           ? "bg-surface-pressed border-border-strong"
+                          : friendRequestsSent.has(user.id)
+                          ? "bg-green-100 border-green-300"
                           : "bg-surface-elevated border-border-strong"
                       }`}
                     >
                       {friendRequestsInProgress.has(user.id) ? (
                         <Ionicons name="refresh" size={16} color="#7A7A8A" />
+                      ) : friendRequestsSent.has(user.id) ? (
+                        <Ionicons name="checkmark" size={16} color="#10b981" />
                       ) : (
                         <Ionicons name="person-add" size={16} color="#C4C4D1" />
                       )}
