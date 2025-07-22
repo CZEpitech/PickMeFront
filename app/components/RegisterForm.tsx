@@ -3,15 +3,20 @@ import { View, Text, TextInput, TouchableOpacity, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Logo from "./Logo";
+import { authService } from "../services/authService";
+import { tokenStorage } from "../services/tokenStorage";
 
 export default function RegisterForm() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [alias, setAlias] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
 
-  const handleRegister = () => {
-    if (!username || !password || !confirmPassword) {
+  const handleRegister = async () => {
+    
+    if (!email || !alias || !password || !confirmPassword) {
       Alert.alert("Erreur", "Veuillez remplir tous les champs");
       return;
     }
@@ -19,7 +24,24 @@ export default function RegisterForm() {
       Alert.alert("Erreur", "Les mots de passe ne correspondent pas");
       return;
     }
-    Alert.alert("Inscription", "Placeholder - Backend non fonctionnel");
+
+    setIsLoading(true);
+    
+    try {
+      const result = await authService.register({ email, password, alias });
+      
+      if (result.success) {
+        Alert.alert("Succès", "Inscription réussie ! Vous pouvez maintenant vous connecter.", [
+          { text: "OK", onPress: () => router.back() }
+        ]);
+      } else {
+        Alert.alert("Erreur", result.message || "Erreur lors de l'inscription");
+      }
+    } catch (error) {
+      Alert.alert("Erreur", "Une erreur inattendue s'est produite");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleLogin = () => {
@@ -40,9 +62,23 @@ export default function RegisterForm() {
             <View className="mb-4">
               <View className="bg-primary-variant bg-opacity-32 border-2 border-primary-text rounded-[29px] h-[38px] justify-center px-4">
                 <TextInput
-                  value={username}
-                  onChangeText={setUsername}
-                  placeholder="USERNAME"
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="EMAIL"
+                  placeholderTextColor="#F5C74D"
+                  className="text-primary-text text-center text-[13px] font-semibold"
+                  autoCapitalize="none"
+                  keyboardType="email-address"
+                />
+              </View>
+            </View>
+            
+            <View className="mb-4">
+              <View className="bg-primary-variant bg-opacity-32 border-2 border-primary-text rounded-[29px] h-[38px] justify-center px-4">
+                <TextInput
+                  value={alias}
+                  onChangeText={setAlias}
+                  placeholder="ALIAS"
                   placeholderTextColor="#F5C74D"
                   className="text-primary-text text-center text-[13px] font-semibold"
                   autoCapitalize="none"
@@ -81,10 +117,11 @@ export default function RegisterForm() {
           <View className="mb-6">
             <TouchableOpacity
               onPress={handleRegister}
-              className="bg-primary-text rounded-[29px] h-[38px] justify-center"
+              disabled={isLoading}
+              className={`bg-primary-text rounded-[29px] h-[38px] justify-center ${isLoading ? 'opacity-50' : ''}`}
             >
               <Text className="text-[#8894B9] text-center text-[13px] font-bold">
-                REGISTER
+                {isLoading ? 'INSCRIPTION...' : 'REGISTER'}
               </Text>
             </TouchableOpacity>
             

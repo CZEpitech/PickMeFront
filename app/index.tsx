@@ -1,11 +1,51 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Text, View, TouchableOpacity } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import Logo from "./components/Logo";
+import { tokenStorage } from "./services/tokenStorage";
+import { authService } from "./services/authService";
 
 export default function IndexScreen() {
   const router = useRouter();
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const token = await tokenStorage.getToken();
+      
+      if (token) {
+        const result = await authService.verifyToken(token);
+        
+        if (result.success) {
+          router.replace('/(tabs)/home');
+          return;
+        } else {
+          await tokenStorage.removeToken();
+        }
+      } else {
+      }
+    } catch (error) {
+      console.error('💥 [INDEX] Error checking auth status:', error);
+    } finally {
+      setIsCheckingAuth(false);
+    }
+  };
+
+  if (isCheckingAuth) {
+    return (
+      <SafeAreaView className="flex-1 bg-primary-bg">
+        <View className="flex-1 justify-center items-center">
+          <Logo />
+          <Text className="text-primary-text text-lg font-bold mt-4">Chargement...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-primary-bg">
